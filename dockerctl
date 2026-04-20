@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+set -e
+
+SERVICE="docker"
+
+usage() {
+echo "Usage: $0 {start|stop|status|lock}"
+exit 1
+}
+
+[ $# -eq 1 ] || usage
+
+case "$1" in
+start)
+echo "Unmasking and starting Docker..."
+sudo systemctl unmask "$SERVICE"
+sudo systemctl start "$SERVICE"
+sudo systemctl status "$SERVICE" --no-pager
+;;
+stop)
+echo "Stopping Docker..."
+sudo systemctl stop "$SERVICE"
+;;
+lock)
+echo "Stopping, disabling, and masking Docker..."
+sudo systemctl stop "$SERVICE" 2>/dev/null || true
+sudo systemctl disable "$SERVICE" 2>/dev/null || true
+sudo systemctl mask "$SERVICE"
+systemctl is-enabled "$SERVICE" || true
+;;
+status)
+echo "Docker service state:"
+systemctl status "$SERVICE" --no-pager || true
+echo
+echo "Enabled state:"
+systemctl is-enabled "$SERVICE" || true
+;;
+*)
+usage
+;;
+esac
+
