@@ -57,8 +57,11 @@ Run this once to enforce strict behavior:
 
 ```bash
 sudo systemctl stop docker
+sudo systemctl stop docker.service
 sudo systemctl disable docker
+sudo systemctl disable docker.service
 sudo systemctl mask docker
+sudo systemctl mask docker.service
 ```
 
 After this:

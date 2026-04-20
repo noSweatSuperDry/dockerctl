@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
-SERVICE="docker"
+DOCKER_SERVICE="docker.service"
+DOCKER_SOCKET="docker.socket"
 
 usage() {
-echo "Usage: $0 {start|stop|status|lock}"
+echo "Usage: $0 {start|stop|status}"
 exit 1
 }
 
@@ -12,31 +13,34 @@ exit 1
 
 case "$1" in
 start)
-echo "Unmasking and starting Docker..."
-sudo systemctl unmask "$SERVICE"
-sudo systemctl start "$SERVICE"
-sudo systemctl status "$SERVICE" --no-pager
+echo "Enabling manual Docker access..."
+sudo systemctl unmask "$DOCKER_SERVICE" "$DOCKER_SOCKET"
+sudo systemctl start "$DOCKER_SOCKET"
+sudo systemctl start "$DOCKER_SERVICE"
+echo
+systemctl status "$DOCKER_SERVICE" --no-pager || true
 ;;
 stop)
-echo "Stopping Docker..."
-sudo systemctl stop "$SERVICE"
-;;
-lock)
-echo "Stopping, disabling, and masking Docker..."
-sudo systemctl stop "$SERVICE" 2>/dev/null || true
-sudo systemctl disable "$SERVICE" 2>/dev/null || true
-sudo systemctl mask "$SERVICE"
-systemctl is-enabled "$SERVICE" || true
+echo "Stopping and strictly locking Docker..."
+sudo systemctl stop "$DOCKER_SERVICE" 2>/dev/null || true
+sudo systemctl stop "$DOCKER_SOCKET" 2>/dev/null || true
+sudo systemctl disable "$DOCKER_SERVICE" "$DOCKER_SOCKET" 2>/dev/null || true
+sudo systemctl mask "$DOCKER_SERVICE" "$DOCKER_SOCKET"
+echo
+echo "Docker is now stopped and masked."
 ;;
 status)
-echo "Docker service state:"
-systemctl status "$SERVICE" --no-pager || true
+echo "=== docker.service ==="
+systemctl status "$DOCKER_SERVICE" --no-pager || true
 echo
-echo "Enabled state:"
-systemctl is-enabled "$SERVICE" || true
+echo "=== docker.socket ==="
+systemctl status "$DOCKER_SOCKET" --no-pager || true
+echo
+echo "=== enable state ==="
+systemctl is-enabled "$DOCKER_SERVICE" || true
+systemctl is-enabled "$DOCKER_SOCKET" || true
 ;;
 *)
 usage
 ;;
 esac
-
